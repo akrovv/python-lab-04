@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox as mb
 from math import acos, sqrt, pi
 
 array_coords = []
@@ -16,13 +17,14 @@ def paint(event):
     array_coords.append([event.x, event.y])
 
 
-
-def show_dot(x, y):
+def show_dot(x, y, array_coords):
     x1, y1, x2, y2 = (x - 3), (y - 3), (x + 3), (y + 3)
 
     colour = "#000fff000"
 
     canvas.create_oval(x1, y1, x2, y2, fill=colour)
+
+    array_coords.append([x, y])
 
 
 def clean_table():
@@ -30,8 +32,7 @@ def clean_table():
     entry_y.delete(0, END)
 
 
-def erase():
-    global array_coords
+def erase(array_coords):
     canvas.delete("all")
     array_coords.clear()
     result.config(stat=NORMAL)
@@ -41,19 +42,28 @@ def erase():
 
 def calculate_angle():
     min_angle = 0
+
     for i in range(len(array_coords) - 2):
-        ab = sqrt(
-            (array_coords[i + 1][0] - array_coords[i][0]) ** 2 + (array_coords[i + 1][1] - array_coords[i][1]) ** 2)
-        ac = sqrt(
-            (array_coords[i + 2][0] - array_coords[i][0]) ** 2 + (array_coords[i + 2][1] - array_coords[i][1]) ** 2)
-        bc = sqrt((array_coords[i + 2][0] - array_coords[i + 1][0]) ** 2 + (
-                array_coords[i + 2][1] - array_coords[i + 1][1]) ** 2)
+        j = i + 1
 
-        angle_ab = acos((bc ** 2 + ac ** 2 - ab ** 2) / (2 * bc * ac))
-        angle_ac = acos((ab ** 2 + ac ** 2 - bc ** 2) / (2 * ab * ac))
-        angle_bc = acos((ab ** 2 + bc ** 2 - ac ** 2) / (2 * ab * bc))
+        while j != len(array_coords) - 1:
+            ab = sqrt(
+                (array_coords[i][0] - array_coords[j][0]) ** 2 + (array_coords[i][1] - array_coords[j][1]) ** 2)
+            ac = sqrt(
+                (array_coords[i][0] - array_coords[j + 1][0]) ** 2 + (array_coords[i][1] - array_coords[j + 1][1]) ** 2)
+            bc = sqrt((array_coords[j][0] - array_coords[j + 1][0]) ** 2 + (
+                    array_coords[j][1] - array_coords[j + 1][1]) ** 2)
 
-        min_angle = max(angle_ab, angle_ac, angle_bc, min_angle)
+            angle_ab = acos((bc ** 2 + ac ** 2 - ab ** 2) / (2 * bc * ac))
+            angle_ac = acos((ab ** 2 + ac ** 2 - bc ** 2) / (2 * ab * ac))
+            angle_bc = acos((ab ** 2 + bc ** 2 - ac ** 2) / (2 * ab * bc))
+
+            if angle_ab * 180 / pi == 180 or angle_ac * 180 / pi == 180 or angle_bc * 180 / pi == 180:
+                break
+
+            min_angle = max(angle_ab, angle_ac, angle_bc, min_angle)
+
+            j += 1
 
     return min_angle * 180 / pi
 
@@ -66,22 +76,33 @@ def show_result(res):
 
 
 def on_button(key):
+    global array_coords
+
     if key == 1:
         x = entry_x.get()
         y = entry_y.get()
-
         if x.isdigit() and y.isdigit():
-            show_dot(int(x), int(y))
+            show_dot(int(x), int(y), array_coords)
             clean_table()
         else:
+            mb.showerror("Ошибка", "Были переданы не цифры.")
             return 1
     elif key == 2:
-        res = calculate_angle()
-        if res == 0:
+        if len(array_coords) < 3:
+            mb.showerror("Ошибка", "Количество точек меньше 3-х")
             return 1
+
+        res = calculate_angle()
+
+        if res == 0:
+            mb.showerror("Ошибка", "Координаты не образуют треугольник")
+            return 1
+
         show_result("{:.6f}".format(res) + "°")
     else:
-        erase()
+        erase(array_coords)
+
+    print(array_coords)
 
 
 planimetric = Tk()
