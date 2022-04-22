@@ -5,18 +5,6 @@ from math import acos, sqrt, pi
 array_coords = []
 
 
-def paint(event):
-    global array_coords
-
-    x1, y1, x2, y2 = (event.x - 3), (event.y - 3), (event.x + 3), (event.y + 3)
-
-    colour = "#000fff000"
-
-    canvas.create_oval(x1, y1, x2, y2, fill=colour)
-
-    array_coords.append([event.x, event.y])
-
-
 def show_dot(x, y, array_coords):
     x1, y1, x2, y2 = (x - 3), (y - 3), (x + 3), (y + 3)
 
@@ -40,8 +28,12 @@ def erase(array_coords):
     result.config(stat=DISABLED)
 
 
-def calculate_angle():
-    min_angle = 0
+def erase_triangle():
+    canvas.delete('triangle')
+
+
+def calculate_angle(max_coord):
+    max_angle = 0
 
     for i in range(len(array_coords) - 2):
         j = i + 1
@@ -61,11 +53,16 @@ def calculate_angle():
             if angle_ab * 180 / pi == 180 or angle_ac * 180 / pi == 180 or angle_bc * 180 / pi == 180:
                 break
 
-            min_angle = max(angle_ab, angle_ac, angle_bc, min_angle)
+            if angle_ab > max_angle or angle_ac > max_angle or angle_bc > max_angle:
+                max_angle = max(angle_ab, angle_ac, angle_bc, max_angle)
+                max_coord.clear()
+                max_coord.append([array_coords[i][0], array_coords[i][1]])
+                max_coord.append([[array_coords[j][0], array_coords[j][1]]])
+                max_coord.append([array_coords[j + 1][0], array_coords[j + 1][1]])
 
             j += 1
 
-    return min_angle * 180 / pi
+    return max_angle * 180 / pi
 
 
 def show_result(res):
@@ -75,8 +72,9 @@ def show_result(res):
     result.config(stat=DISABLED)
 
 
-def on_button(key):
+def on_button(event, key=3):
     global array_coords
+    max_coord = []
 
     if key == 1:
         x = entry_x.get()
@@ -92,17 +90,21 @@ def on_button(key):
             mb.showerror("Ошибка", "Количество точек меньше 3-х")
             return 1
 
-        res = calculate_angle()
+        erase_triangle()
+
+        res = calculate_angle(max_coord)
 
         if res == 0:
             mb.showerror("Ошибка", "Координаты не образуют треугольник")
             return 1
 
+        canvas.create_polygon(*max_coord, fill="red", tag="triangle")
+
         show_result("{:.6f}".format(res) + "°")
+    elif key == 3:
+        show_dot(event.x, event.y, array_coords)
     else:
         erase(array_coords)
-
-    print(array_coords)
 
 
 planimetric = Tk()
@@ -110,12 +112,12 @@ planimetric.title('Планиметрические задачи')
 
 # Поле для рисования
 canvas = Canvas(planimetric, width=600, height=920, bg='white')
-canvas.bind("<Button-1>", paint)
+canvas.bind("<Button-1>", on_button)
 
 # Кнопки
-clear = Button(planimetric, text="Стереть", width=100, command=lambda: on_button(3))
-calculate = Button(planimetric, text="Посчитать", width=100, command=lambda: on_button(2))
-point = Button(planimetric, text="Поставить точку", command=lambda: on_button(1))
+clear = Button(planimetric, text="Стереть", width=100, command=lambda: on_button('pass', 4))
+calculate = Button(planimetric, text="Посчитать", width=100, command=lambda: on_button('pass', 2))
+point = Button(planimetric, text="Поставить точку", command=lambda: on_button('pass', 1))
 
 # Текст
 label_x = Label(text="x:")
