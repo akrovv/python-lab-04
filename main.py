@@ -139,7 +139,7 @@ clear.pack(side=BOTTOM)
 calculate.pack(side=BOTTOM)
 result.pack(side=RIGHT)
 
-# Настройка
+# Настройка окна
 planimetric.resizable(0, 0)
 planimetric.geometry('920x700')
 result.config(stat=DISABLED)
